@@ -90,6 +90,75 @@ app.get('/now-playing', (req, res) => {
 });
 
 app.get('/insights', (req, res) => {
+  const mode = req.query.mode || 'live';
+
+  if (mode === 'fan') {
+    return res.json({
+      raceDynamics: {
+        label: 'RACE STORY',
+        accent: 'yellow',
+        line1: 'Breakaway still holding strong',
+        line2: 'Fans watching the chase build'
+      },
+      riderFocus: {
+        label: 'RIDER SPOTLIGHT',
+        accent: 'blue',
+        line1: 'GC leader calm in peloton',
+        line2: 'Saving energy for the climb'
+      },
+      equipmentStatus: {
+        label: 'HYPE ALERT',
+        accent: 'red',
+        line1: 'Attack window approaching',
+        line2: 'Fireworks expected soon'
+      },
+      liveAlert: {
+        label: 'CROWD ENERGY',
+        accent: 'green',
+        line1: 'Crowd intensity rising',
+        line2: 'Final km tension building'
+      }
+    });
+  }
+
+  if (mode === 'officials') {
+    return res.json({
+      raceDynamics: {
+        label: 'INSPECTION STATUS',
+        accent: 'green',
+        line1: 'All bikes compliant',
+        line2: 'No inspection alerts'
+      },
+      riderFocus: {
+        label: 'RIDER CHECK',
+        accent: 'blue',
+        line1: 'Riders cleared for stage',
+        line2: 'No safety holds'
+      },
+      equipmentStatus: {
+        label: 'OFFICIAL ALERTS',
+        accent: 'red',
+        line1: 'No violations detected',
+        line2: 'Monitoring continues'
+      },
+      liveAlert: {
+        label: 'RACE CONTROL',
+        accent: 'yellow',
+        line1: 'Race operations stable',
+        line2: 'Communications active'
+      }
+    });
+  }
+
+  res.json({
+    raceDynamics: { label: 'RACE DYNAMICS', accent: 'yellow', line1: '...', line2: '...' },
+    riderFocus: { label: 'RIDER FOCUS', accent: 'blue', line1: '...', line2: '...' },
+    equipmentStatus: { label: 'EQUIPMENT STATUS', accent: 'green', line1: '...', line2: '...' },
+    liveAlert: { label: 'LIVE ALERT', accent: 'red', line1: '...', line2: '...' }
+  });
+});
+
+app.get('/insights', (req, res) => {
   const { gap, avgSpeed, kmToGo, inspectionsClear } = raceState;
   const gapInt = Math.floor(gap);
 
