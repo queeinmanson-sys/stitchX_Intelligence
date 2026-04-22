@@ -1,12 +1,15 @@
 "use client"
 
 import RaceControlDashboard from "@/components/race-control-dashboard"
+import { ToastProvider } from "@/components/stitchx-toast"
+import { InspectionProvider } from "@/components/inspection-context"
 
 export default function Page() {
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Test Load</h1>
-      <RaceControlDashboard />
-    </div>
+    <ToastProvider>
+      <InspectionProvider>
+        <RaceControlDashboard />
+      </InspectionProvider>
+    </ToastProvider>
   )
 }
