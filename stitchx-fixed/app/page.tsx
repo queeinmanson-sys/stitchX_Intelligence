@@ -1,12 +1,8 @@
-"use client"
-
-import dynamic from "next/dynamic"
-
-const RaceControlDashboard = dynamic(
-  () => import("@/components/race-control-dashboard"),
-  { ssr: false }
-)
-
 export default function Page() {
-  return <RaceControlDashboard />
+  return (
+    <main style={{ minHeight: "100vh", background: "#050814", color: "white", padding: "40px" }}>
+      <h1>StitchX is live</h1>
+      <p>Deployment is working.</p>
+    </main>
+  )
 }
