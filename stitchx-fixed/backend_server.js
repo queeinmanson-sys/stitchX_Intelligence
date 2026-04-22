@@ -121,6 +121,14 @@ app.get('/insights', (req, res) => {
     });
   }
 
+app.get("/version-check", (req, res) => {
+  res.json({
+    version: "NEW_BACKEND_001",
+    nowPlayingExists: true,
+    modeSupport: true
+  });
+});
+  
   if (mode === 'officials') {
     return res.json({
       raceDynamics: {
