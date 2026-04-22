@@ -23,11 +23,11 @@ const server = http.createServer((req, res) => {
   );
 });
 
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
 server.on("error", (error) => {
   console.error(`Failed to start server: ${error.message}`);
   process.exit(1);
+});
+
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
