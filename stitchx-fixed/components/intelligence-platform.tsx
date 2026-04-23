@@ -71,6 +71,8 @@ export function IntelligencePlatform() {
         {lastUpdated ? "Updated just now" : "Loading..."}
       </p>
 
+      <p className="text-white mb-4">Current tab: {activeTab}</p>
+      
       <div className="flex gap-2 mb-8">
         <button
           onClick={() => setActiveTab("live")}
