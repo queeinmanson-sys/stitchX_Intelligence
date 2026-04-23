@@ -19,7 +19,7 @@ const PLAYLIST = [
   { title: "Breakaway Beat", artist: "stitchX Live", live: true },
   { title: "Mountain Momentum", artist: "stitchX Sessions", live: false },
   { title: "Sprint Finish", artist: "stitchX Live", live: true },
-  { title: "Tempo Climb", artist: "stitchX Sessions", live: false },
+  { title: "Tempo Climb", artist: "stitchX Sessions", live: false }
 ];
 
 let nowPlayingIndex = 0;
@@ -76,26 +76,26 @@ app.get("/insights", (req, res) => {
         label: "RACE STORY",
         accent: "yellow",
         line1: "Breakaway still holding strong",
-        line2: "Fans watching the chase build",
+        line2: "Fans watching the chase build"
       },
       riderFocus: {
         label: "RIDER SPOTLIGHT",
         accent: "blue",
         line1: "GC leader calm in peloton",
-        line2: "Saving energy for the climb",
+        line2: "Saving energy for the climb"
       },
       equipmentStatus: {
         label: "HYPE ALERT",
         accent: "red",
         line1: "Attack window approaching",
-        line2: "Fireworks expected soon",
+        line2: "Fireworks expected soon"
       },
       liveAlert: {
         label: "CROWD ENERGY",
         accent: "green",
         line1: "Crowd intensity rising",
-        line2: "Final km tension building",
-      },
+        line2: "Final km tension building"
+      }
     });
   }
 
@@ -105,26 +105,26 @@ app.get("/insights", (req, res) => {
         label: "INSPECTION STATUS",
         accent: "green",
         line1: "All bikes compliant",
-        line2: "No inspection alerts",
+        line2: "No inspection alerts"
       },
       riderFocus: {
         label: "RIDER CHECK",
         accent: "blue",
         line1: "Riders cleared for stage",
-        line2: "No safety holds",
+        line2: "No safety holds"
       },
       equipmentStatus: {
         label: "OFFICIAL ALERTS",
         accent: "red",
         line1: "No violations detected",
-        line2: "Monitoring continues",
+        line2: "Monitoring continues"
       },
       liveAlert: {
         label: "RACE CONTROL",
         accent: "yellow",
         line1: "Race operations stable",
-        line2: "Communications active",
-      },
+        line2: "Communications active"
+      }
     });
   }
 
@@ -166,26 +166,26 @@ app.get("/insights", (req, res) => {
       label: "RACE DYNAMICS",
       accent: "yellow",
       line1: raceLine1,
-      line2: raceLine2,
+      line2: raceLine2
     },
     riderFocus: {
       label: "RIDER FOCUS",
       accent: "blue",
       line1: riderLine1,
-      line2: riderLine2,
+      line2: riderLine2
     },
     equipmentStatus: {
       label: "EQUIPMENT STATUS",
       accent: "green",
       line1: equipmentLine1,
-      line2: equipmentLine2,
+      line2: equipmentLine2
     },
     liveAlert: {
       label: "LIVE ALERT",
       accent: "red",
       line1: alertLine1,
-      line2: alertLine2,
-    },
+      line2: alertLine2
+    }
   });
 });
 
