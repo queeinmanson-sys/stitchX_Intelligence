@@ -5,7 +5,8 @@ import { useState, useEffect, useCallback } from "react"
 type TabType = "live" | "fan" | "officials"
 
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "https://stitchxradio-production.up.railway.app"
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  "https://stitchxintelligence-production.up.railway.app"
 
 interface InsightData {
   label: string
@@ -29,10 +30,14 @@ export function IntelligencePlatform() {
 
   const fetchInsights = useCallback(async (mode: TabType) => {
     try {
-      const response = await fetch(`${BACKEND_URL}/insights?mode=${activeTab}`)`, {
+      const response = await fetch(`${BACKEND_URL}/insights?mode=${mode}`, {
         cache: "no-store",
       })
-      if (!response.ok) throw new Error("Failed to fetch insights")
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch insights")
+      }
+
       const data: InsightsResponse = await response.json()
       setInsights(data)
       setLastUpdated(new Date())
@@ -44,8 +49,8 @@ export function IntelligencePlatform() {
   }, [])
 
   useEffect(() => {
-  fetchInsights(activeTab)
-}, [activeTab])
+    setLoading(true)
+    fetchInsights(activeTab)
 
     const interval = setInterval(() => {
       fetchInsights(activeTab)
@@ -54,14 +59,14 @@ export function IntelligencePlatform() {
     return () => clearInterval(interval)
   }, [activeTab, fetchInsights])
 
- const blocks = insights
-  ? [
-      insights.raceDynamics,
-      insights.riderFocus,
-      insights.equipmentStatus,
-      insights.liveAlert,
-    ]
-  : []
+  const blocks = insights
+    ? [
+        insights.raceDynamics,
+        insights.riderFocus,
+        insights.equipmentStatus,
+        insights.liveAlert,
+      ]
+    : []
 
   return (
     <div className="w-full max-w-5xl">
@@ -73,20 +78,31 @@ export function IntelligencePlatform() {
 
       <div className="flex gap-2 mb-8">
         <button
+          type="button"
           onClick={() => setActiveTab("live")}
-          className={`px-4 py-2 rounded ${activeTab === "live" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-300"}`}
+          className={`px-4 py-2 rounded ${
+            activeTab === "live" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-300"
+          }`}
         >
           Live Race
         </button>
+
         <button
+          type="button"
           onClick={() => setActiveTab("fan")}
-          className={`px-4 py-2 rounded ${activeTab === "fan" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-300"}`}
+          className={`px-4 py-2 rounded ${
+            activeTab === "fan" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-300"
+          }`}
         >
           Fan Zone
         </button>
+
         <button
+          type="button"
           onClick={() => setActiveTab("officials")}
-          className={`px-4 py-2 rounded ${activeTab === "officials" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-300"}`}
+          className={`px-4 py-2 rounded ${
+            activeTab === "officials" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-300"
+          }`}
         >
           UCI Officials
         </button>
@@ -98,7 +114,9 @@ export function IntelligencePlatform() {
         {!loading &&
           blocks.map((block) => (
             <div key={`${activeTab}-${block.label}`}>
-              <p className="text-xs font-bold mb-1 uppercase text-yellow-400">{block.label}</p>
+              <p className="text-xs font-bold mb-1 uppercase text-yellow-400">
+                {block.label}
+              </p>
               <p className="text-2xl text-white">{block.line1}</p>
               <p className="text-gray-400">{block.line2}</p>
             </div>
