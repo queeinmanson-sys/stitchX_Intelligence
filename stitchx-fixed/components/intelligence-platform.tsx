@@ -44,8 +44,8 @@ export function IntelligencePlatform() {
   }, [])
 
   useEffect(() => {
-    setLoading(true)
-    fetchInsights(activeTab)
+  fetchInsights(activeTab)
+}, [activeTab])
 
     const interval = setInterval(() => {
       fetchInsights(activeTab)
