@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react"
 type TabType = "live" | "fan" | "officials"
 
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "https://stitchxradio-production.up.railway.app"
+  process.env.NEXT_PUBLIC_BACKEND_URL || "https://stitchxintelligence-production.up.railway.app"
 
 interface InsightData {
   label: string
@@ -55,7 +55,12 @@ export function IntelligencePlatform() {
   }, [activeTab, fetchInsights])
 
   const blocks = insights
-    ? [insights.raceDynamics, insights.riderFocus, insights.liveAlert]
+    ? [
+        insights.raceDynamics,
+        insights.riderFocus,
+        insights.equipmentStatus,
+        insights.liveAlert,
+      ]
     : []
 
   return (
