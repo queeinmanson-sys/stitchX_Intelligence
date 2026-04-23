@@ -54,9 +54,14 @@ export function IntelligencePlatform() {
     return () => clearInterval(interval)
   }, [activeTab, fetchInsights])
 
-  const blocks = insights
-    ? [insights.raceDynamics, insights.riderFocus, insights.liveAlert]
-    : []
+ const blocks = insights
+  ? [
+      insights.raceDynamics,
+      insights.riderFocus,
+      insights.equipmentStatus,
+      insights.liveAlert,
+    ]
+  : []
 
   return (
     <div className="w-full max-w-5xl">
