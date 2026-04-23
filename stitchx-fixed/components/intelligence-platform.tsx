@@ -29,7 +29,7 @@ export function IntelligencePlatform() {
 
   const fetchInsights = useCallback(async (mode: TabType) => {
     try {
-      const response = await fetch(`${BACKEND_URL}/insights?mode=${mode}`, {
+      const response = await fetch(`${BACKEND_URL}/insights?mode=${activeTab}`)`, {
         cache: "no-store",
       })
       if (!response.ok) throw new Error("Failed to fetch insights")
