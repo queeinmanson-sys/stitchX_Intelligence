@@ -1,5 +1,7 @@
 "use client"
 
+export function IntelligencePlatform({ activeTab }: { activeTab: TabType }) {
+  
 import { useEffect, useState } from "react"
 
 type TabType = "live" | "fan" | "officials"
@@ -23,7 +25,6 @@ interface InsightsResponse {
 }
 
 export function IntelligencePlatform() {
-  const [activeTab, setActiveTab] = useState<TabType>("live")
   const [insights, setInsights] = useState<InsightsResponse | null>(null)
   const [loading, setLoading] = useState(true)
 
