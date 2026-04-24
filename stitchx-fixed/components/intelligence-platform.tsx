@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useEffect, useState } from "react"
 
 type TabType = "live" | "fan" | "officials"
 
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "https://stitchxintelligence-production.up.railway.app"
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  "https://stitchxintelligence-production.up.railway.app"
 
 interface InsightData {
   label: string
@@ -24,35 +25,33 @@ interface InsightsResponse {
 export function IntelligencePlatform() {
   const [activeTab, setActiveTab] = useState<TabType>("live")
   const [insights, setInsights] = useState<InsightsResponse | null>(null)
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const fetchInsights = useCallback(async (mode: TabType) => {
+  async function fetchInsights(mode: TabType) {
+    setLoading(true)
+
+    const url = `${BACKEND_URL}/insights?mode=${mode}&t=${Date.now()}`
+    console.log("Fetching insights:", url)
+
     try {
-      const response = await fetch(`${BACKEND_URL}/insights?mode=${mode}`, {
-        cache: "no-store",
-      })
-      if (!response.ok) throw new Error("Failed to fetch insights")
-      const data: InsightsResponse = await response.json()
+      const response = await fetch(url, { cache: "no-store" })
+      const data = await response.json()
       setInsights(data)
-      setLastUpdated(new Date())
-    } catch (err) {
-      console.error("Insights fetch failed:", err)
+    } catch (error) {
+      console.error("Insights fetch failed:", error)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
+
+  function changeTab(mode: TabType) {
+    setActiveTab(mode)
+    fetchInsights(mode)
+  }
 
   useEffect(() => {
-    setLoading(true)
-    fetchInsights(activeTab)
-
-    const interval = setInterval(() => {
-      fetchInsights(activeTab)
-    }, 5000)
-
-    return () => clearInterval(interval)
-  }, [activeTab, fetchInsights])
+    fetchInsights("live")
+  }, [])
 
   const blocks = insights
     ? [
@@ -67,28 +66,37 @@ export function IntelligencePlatform() {
     <div className="w-full max-w-5xl">
       <h2 className="text-2xl font-bold text-white mb-2">Intelligence Platform</h2>
       <p className="text-sm text-gray-400 mb-1">Real-time cycling race intelligence</p>
-      <p className="text-xs text-gray-500 mb-6">
-        {lastUpdated ? "Updated just now" : "Loading..."}
-      </p>
+      <p className="text-xs text-gray-500 mb-2">Updated just now</p>
 
       <p className="text-white mb-4">Current tab: {activeTab}</p>
-      
+
       <div className="flex gap-2 mb-8">
         <button
-          onClick={() => setActiveTab("live")}
-          className={`px-4 py-2 rounded ${activeTab === "live" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-300"}`}
+          type="button"
+          onClick={() => changeTab("live")}
+          className={`px-4 py-2 rounded ${
+            activeTab === "live" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-300"
+          }`}
         >
           Live Race
         </button>
+
         <button
-          onClick={() => setActiveTab("fan")}
-          className={`px-4 py-2 rounded ${activeTab === "fan" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-300"}`}
+          type="button"
+          onClick={() => changeTab("fan")}
+          className={`px-4 py-2 rounded ${
+            activeTab === "fan" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-300"
+          }`}
         >
           Fan Zone
         </button>
+
         <button
-          onClick={() => setActiveTab("officials")}
-          className={`px-4 py-2 rounded ${activeTab === "officials" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-300"}`}
+          type="button"
+          onClick={() => changeTab("officials")}
+          className={`px-4 py-2 rounded ${
+            activeTab === "officials" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-300"
+          }`}
         >
           UCI Officials
         </button>
@@ -100,7 +108,9 @@ export function IntelligencePlatform() {
         {!loading &&
           blocks.map((block) => (
             <div key={`${activeTab}-${block.label}`}>
-              <p className="text-xs font-bold mb-1 uppercase text-yellow-400">{block.label}</p>
+              <p className="text-xs font-bold mb-1 uppercase text-yellow-400">
+                {block.label}
+              </p>
               <p className="text-2xl text-white">{block.line1}</p>
               <p className="text-gray-400">{block.line2}</p>
             </div>
