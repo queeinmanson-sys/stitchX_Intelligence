@@ -11,7 +11,7 @@ import { LogOut } from "lucide-react"
 type TabType = "live" | "fan" | "officials"
 
 interface RaceControlDashboardProps {
-  user: User
+   user?: User | null
 }
 
 function secondsToClock(sec: number): string {
@@ -91,7 +91,7 @@ export default function RaceControlDashboard({ user }: RaceControlDashboardProps
 
           <div className="flex items-center gap-3">
             <span className="rounded-full border border-slate-800 px-4 py-2 text-sm text-slate-300">
-              {user.email || "Official"}
+              {user?.email || "Official"}
             </span>
 
             <span className="rounded-full border border-slate-800 px-4 py-2 text-sm text-yellow-400">
