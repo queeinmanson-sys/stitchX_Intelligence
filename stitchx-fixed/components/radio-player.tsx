@@ -292,8 +292,8 @@ export function RadioPlayer() {
         </div>
 
         {/* Hidden audio */}
-        <audio ref={audioRef} src={`${BACKEND_URL}/stream`} preload="none" crossOrigin="anonymous" />
+        <audio ref={audioRef} src={`${BACKEND_URL}/stream`} preload="none" />
       </div>
     </div>
-  )
+     )
 }
