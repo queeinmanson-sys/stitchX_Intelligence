@@ -1,3 +1,4 @@
+cat > app/layout.tsx << 'EOF'
 import type { Metadata, Viewport } from 'next'
 import { Inter, Geist_Mono } from 'next/font/google'
 import './globals.css'
@@ -37,3 +38,4 @@ export default function RootLayout({
     </html>
   )
 }
+EOF
