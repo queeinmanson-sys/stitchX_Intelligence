@@ -1,12 +1,12 @@
-"use client"
+'use client'
 
-import { useEffect, useState } from "react"
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { cn } from '@/lib/utils'
 
-type TabType = "live" | "fan" | "officials"
+export type TabType = 'live' | 'fan' | 'officials'
 
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL ||
-  "https://stitchxintelligence-production.up.railway.app"
+  process.env.NEXT_PUBLIC_BACKEND_URL || 'https://stitchxintelligence-production.up.railway.app'
 
 interface InsightData {
   label: string
@@ -15,76 +15,139 @@ interface InsightData {
   line2: string
 }
 
-interface InsightsResponse {
-  raceDynamics: InsightData
-  riderFocus: InsightData
-  equipmentStatus: InsightData
-  liveAlert: InsightData
+// Backend may return any shape with a few InsightData blocks.
+// We render whichever blocks exist, in the order the backend gives them.
+type InsightsResponse = Record<string, InsightData>
+
+interface IntelligencePlatformProps {
+  activeTab: TabType
 }
 
-export function IntelligencePlatform({ activeTab }: { activeTab: TabType }) {
+export function IntelligencePlatform({ activeTab }: IntelligencePlatformProps) {
   const [insights, setInsights] = useState<InsightsResponse | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [, setTick] = useState(0)
 
-  async function fetchInsights(mode: TabType) {
-    setLoading(true)
+  // Track the latest mode so a stale fetch can't overwrite a newer one
+  const latestModeRef = useRef<TabType>(activeTab)
 
+  const fetchInsights = useCallback(async (mode: TabType) => {
+    latestModeRef.current = mode
     try {
-      const response = await fetch(
-        `${BACKEND_URL}/insights?mode=${mode}&t=${Date.now()}`,
-        { cache: "no-store" }
-      )
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch insights")
+      const res = await fetch(`${BACKEND_URL}/insights?mode=${mode}`, {
+        cache: 'no-store',
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data: InsightsResponse = await res.json()
+      // Only commit if the user hasn't switched tabs since this request started
+      if (latestModeRef.current === mode) {
+        setInsights(data)
+        setLastUpdated(new Date())
+        setError(null)
       }
-
-      const data: InsightsResponse = await response.json()
-      setInsights(data)
-    } catch (error) {
-      console.error("Insights fetch failed:", error)
-    } finally {
-      setLoading(false)
+    } catch (e) {
+      if (latestModeRef.current === mode) {
+        setError(e instanceof Error ? e.message : 'Fetch failed')
+      }
     }
+  }, [])
+
+  // Re-fetch whenever the tab changes, then poll every 5s
+  useEffect(() => {
+    setInsights(null) // clear stale content while the new tab loads
+    fetchInsights(activeTab)
+    const id = setInterval(() => fetchInsights(activeTab), 5000)
+    return () => clearInterval(id)
+  }, [activeTab, fetchInsights])
+
+  // Tick once a second so "Updated Xs ago" stays fresh
+  useEffect(() => {
+    const t = setInterval(() => setTick((n) => n + 1), 1000)
+    return () => clearInterval(t)
+  }, [])
+
+  const getTimeAgo = () => {
+    if (!lastUpdated) return ''
+    const seconds = Math.floor((Date.now() - lastUpdated.getTime()) / 1000)
+    if (seconds < 5) return 'just now'
+    if (seconds < 60) return `${seconds}s ago`
+    return `${Math.floor(seconds / 60)}m ago`
   }
 
-  useEffect(() => {
-    fetchInsights(activeTab)
-  }, [activeTab])
-
-  const blocks = insights
-    ? [
-        insights.raceDynamics,
-        insights.riderFocus,
-        insights.equipmentStatus,
-        insights.liveAlert,
-      ]
-    : []
+  const blocks: InsightData[] = insights ? Object.values(insights) : []
 
   return (
-    <div className="w-full max-w-5xl">
-      <h2 className="text-2xl font-bold text-white mb-2">
-        Intelligence Platform
-      </h2>
-      <p className="text-sm text-gray-400 mb-1">
-        Real-time cycling race intelligence
-      </p>
-      <p className="text-xs text-gray-500 mb-6">Mode: {activeTab}</p>
-
-      <div className="space-y-8">
-        {loading && <p className="text-gray-400">Loading insights...</p>}
-
-        {!loading &&
-          blocks.map((block) => (
-            <div key={`${activeTab}-${block.label}`}>
-              <p className="text-xs font-bold mb-1 uppercase text-yellow-400">
-                {block.label}
-              </p>
-              <p className="text-2xl text-white">{block.line1}</p>
-              <p className="text-gray-400">{block.line2}</p>
-            </div>
-          ))}
+    <div className="w-full bg-card border border-border rounded-3xl p-6 shadow-lg">
+      <div className="flex items-start justify-between mb-4 gap-4 flex-wrap">
+        <div>
+          <h2 className="text-xl font-bold text-foreground">Intelligence Platform</h2>
+          <p className="text-xs text-muted-foreground">
+            Mode: <span className="font-semibold text-foreground">{activeTab}</span>
+            {' · '}Real-time cycling race intelligence
+          </p>
+        </div>
+        {lastUpdated && (
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            Updated {getTimeAgo()}
+          </span>
+        )}
       </div>
+
+      {error && !insights && (
+        <div className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded px-3 py-2 mb-4">
+          Backend unreachable: {error}
+        </div>
+      )}
+
+      <div className="space-y-5">
+        {blocks.length === 0 && !error && (
+          <div className="text-sm text-muted-foreground">Loading {activeTab} insights…</div>
+        )}
+        {blocks.map((block, i) => (
+          <InsightBlock
+            key={`${activeTab}-${i}-${block.label}`}
+            accent={block.accent}
+            label={block.label}
+            line1={block.line1}
+            line2={block.line2}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+const ACCENT: Record<string, string> = {
+  yellow: 'text-yellow-400',
+  blue: 'text-blue-400',
+  red: 'text-red-400',
+  green: 'text-green-400',
+}
+
+function InsightBlock({
+  accent,
+  label,
+  line1,
+  line2,
+}: {
+  accent: string
+  label: string
+  line1: string
+  line2: string
+}) {
+  return (
+    <div>
+      <p
+        className={cn(
+          'text-[10px] font-bold tracking-widest mb-1',
+          ACCENT[accent] ?? 'text-primary'
+        )}
+      >
+        {label}
+      </p>
+      <p className="text-base text-foreground">{line1}</p>
+      {line2 && <p className="text-sm text-muted-foreground mt-0.5">{line2}</p>}
     </div>
   )
 }
