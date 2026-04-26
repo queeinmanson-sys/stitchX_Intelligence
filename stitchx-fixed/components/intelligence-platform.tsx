@@ -1,12 +1,13 @@
-'use client'
+"use client"
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { cn } from '@/lib/utils'
+import { useState, useEffect, useCallback, useRef } from "react"
+import { cn } from "@/lib/utils"
 
-export type TabType = 'live' | 'fan' | 'officials'
+export type TabType = "live" | "fan" | "officials"
 
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || 'https://stitchxintelligence-production.up.railway.app'
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  "https://stitchxintelligence-production.up.railway.app"
 
 interface InsightData {
   label: string
@@ -15,47 +16,56 @@ interface InsightData {
   line2: string
 }
 
-// Backend may return any shape with a few InsightData blocks.
-// We render whichever blocks exist, in the order the backend gives them.
+// Backend may return any shape with InsightData blocks; we render them all.
 type InsightsResponse = Record<string, InsightData>
 
 interface IntelligencePlatformProps {
-  activeTab: TabType
+  /** Controlled tab from parent dashboard. */
+  tab?: TabType
+  activeTab?: TabType
+  /** Hide the inner tab switcher. Default: hide if a tab prop is provided. */
+  showTabs?: boolean
 }
 
-export function IntelligencePlatform({ activeTab }: IntelligencePlatformProps) {
+export function IntelligencePlatform(props: IntelligencePlatformProps = {}) {
+  // Accept either `tab` or `activeTab` so we work with either parent shape.
+  const controlledTab = props.tab ?? props.activeTab
+  const showTabs = props.showTabs ?? controlledTab === undefined
+
+  const [internalTab, setInternalTab] = useState<TabType>("live")
+  const activeTab = controlledTab ?? internalTab
+
   const [insights, setInsights] = useState<InsightsResponse | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [, setTick] = useState(0)
 
-  // Track the latest mode so a stale fetch can't overwrite a newer one
+  // Guard against stale fetches overwriting newer ones when the tab changes fast
   const latestModeRef = useRef<TabType>(activeTab)
 
   const fetchInsights = useCallback(async (mode: TabType) => {
     latestModeRef.current = mode
     try {
-      const res = await fetch(`${BACKEND_URL}/insights?mode=${mode}`, {
-        cache: 'no-store',
+      const response = await fetch(`${BACKEND_URL}/insights?mode=${mode}`, {
+        cache: "no-store",
       })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data: InsightsResponse = await res.json()
-      // Only commit if the user hasn't switched tabs since this request started
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const data: InsightsResponse = await response.json()
       if (latestModeRef.current === mode) {
         setInsights(data)
         setLastUpdated(new Date())
         setError(null)
       }
-    } catch (e) {
+    } catch (err) {
       if (latestModeRef.current === mode) {
-        setError(e instanceof Error ? e.message : 'Fetch failed')
+        setError(err instanceof Error ? err.message : "Fetch failed")
       }
     }
   }, [])
 
-  // Re-fetch whenever the tab changes, then poll every 5s
+  // Re-fetch on tab change, then poll every 5s
   useEffect(() => {
-    setInsights(null) // clear stale content while the new tab loads
+    setInsights(null)
     fetchInsights(activeTab)
     const id = setInterval(() => fetchInsights(activeTab), 5000)
     return () => clearInterval(id)
@@ -68,9 +78,9 @@ export function IntelligencePlatform({ activeTab }: IntelligencePlatformProps) {
   }, [])
 
   const getTimeAgo = () => {
-    if (!lastUpdated) return ''
+    if (!lastUpdated) return ""
     const seconds = Math.floor((Date.now() - lastUpdated.getTime()) / 1000)
-    if (seconds < 5) return 'just now'
+    if (seconds < 5) return "just now"
     if (seconds < 60) return `${seconds}s ago`
     return `${Math.floor(seconds / 60)}m ago`
   }
@@ -84,7 +94,7 @@ export function IntelligencePlatform({ activeTab }: IntelligencePlatformProps) {
           <h2 className="text-xl font-bold text-foreground">Intelligence Platform</h2>
           <p className="text-xs text-muted-foreground">
             Mode: <span className="font-semibold text-foreground">{activeTab}</span>
-            {' · '}Real-time cycling race intelligence
+            {" \u00b7 "}Real-time cycling race intelligence
           </p>
         </div>
         {lastUpdated && (
@@ -93,6 +103,23 @@ export function IntelligencePlatform({ activeTab }: IntelligencePlatformProps) {
           </span>
         )}
       </div>
+
+      {showTabs && (
+        <div className="flex gap-2 mb-6 flex-wrap">
+          <InnerTab active={activeTab === "live"} onClick={() => setInternalTab("live")}>
+            Live Race
+          </InnerTab>
+          <InnerTab active={activeTab === "fan"} onClick={() => setInternalTab("fan")}>
+            Fan Zone
+          </InnerTab>
+          <InnerTab
+            active={activeTab === "officials"}
+            onClick={() => setInternalTab("officials")}
+          >
+            UCI Officials
+          </InnerTab>
+        </div>
+      )}
 
       {error && !insights && (
         <div className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded px-3 py-2 mb-4">
@@ -119,10 +146,35 @@ export function IntelligencePlatform({ activeTab }: IntelligencePlatformProps) {
 }
 
 const ACCENT: Record<string, string> = {
-  yellow: 'text-yellow-400',
-  blue: 'text-blue-400',
-  red: 'text-red-400',
-  green: 'text-green-400',
+  yellow: "text-yellow-400",
+  blue: "text-blue-400",
+  red: "text-red-400",
+  green: "text-green-400",
+}
+
+function InnerTab({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "px-4 py-2 rounded-full text-sm font-semibold border transition-colors",
+        active
+          ? "bg-primary text-primary-foreground border-primary"
+          : "bg-card border-border text-muted-foreground hover:text-foreground"
+      )}
+    >
+      {children}
+    </button>
+  )
 }
 
 function InsightBlock({
@@ -140,8 +192,8 @@ function InsightBlock({
     <div>
       <p
         className={cn(
-          'text-[10px] font-bold tracking-widest mb-1',
-          ACCENT[accent] ?? 'text-primary'
+          "text-[10px] font-bold tracking-widest mb-1",
+          ACCENT[accent] ?? "text-primary"
         )}
       >
         {label}
