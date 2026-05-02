@@ -25,7 +25,6 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
