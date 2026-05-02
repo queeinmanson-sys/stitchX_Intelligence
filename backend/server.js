@@ -374,3 +374,11 @@ app.post('/race-event', (req, res) => {
     ai_radio: radio
   });
 });
+
+app.get("/version", (req, res) => {
+  res.json({
+    version: "stage-intelligence-v1",
+    commit: "7c071ff"
+  });
+});
+
