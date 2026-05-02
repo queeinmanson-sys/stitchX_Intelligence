@@ -6,6 +6,11 @@ app.get("/", (req, res) => {
     endpoints: ["/health", "/version", "/stage-intelligence"]
   });
 });
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
