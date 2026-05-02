@@ -1,3 +1,16 @@
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const cors = require('cors');
+const http = require("http");
+const { Server } = require("socket.io");
+
+const app = express();
+
+app.use(cors());
+app.use(express.static(__dirname));
+app.use(express.json());
+
 // Friendly homepage route for root URL
 app.get("/", (req, res) => {
   res.json({
@@ -11,12 +24,6 @@ app.get("/", (req, res) => {
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
-const express = require('express');
-const path = require('path');
-const fs = require('fs');
-const cors = require('cors');
-const http = require("http");
-const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
