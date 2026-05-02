@@ -1,3 +1,11 @@
+// Friendly homepage route for root URL
+app.get("/", (req, res) => {
+  res.json({
+    service: "StitchX Backend",
+    status: "online",
+    endpoints: ["/health", "/version", "/stage-intelligence"]
+  });
+});
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
