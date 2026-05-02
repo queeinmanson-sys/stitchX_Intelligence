@@ -2,7 +2,6 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
-const sqlite3 = require('sqlite3').verbose();
 const http = require("http");
 const { Server } = require("socket.io");
 const server = http.createServer(app);
