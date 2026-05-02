@@ -4,6 +4,8 @@ const fs = require('fs');
 const cors = require('cors');
 const http = require("http");
 const { Server } = require("socket.io");
+
+const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -12,6 +14,38 @@ const io = new Server(server, {
   }
 });
 const PORT = process.env.PORT || 3000;
+
+// --- In-memory stores (replaces sqlite3 which is not compatible with Railway) ---
+const raceUpdatesStore = [];
+const fanZonePostsStore = [];
+const latestRaceState = { last_event: null, ai_radio: null };
+
+function generateId(prefix) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+// --- Stage database for AI intelligence ---
+const stageDatabase = {
+  mountain: {
+    type: 'mountain',
+    description: 'High-altitude mountain stage with HC climbs',
+    weather: 'Thunderstorms predicted on the descent',
+    terrain: 'Multiple HC climbs, technical descent'
+  },
+  hilly: {
+    type: 'hilly',
+    description: 'Hilly stage with punchy climbs',
+    weather: 'Hot and humid conditions',
+    terrain: 'Rolling hills, short steep kickers'
+  },
+  time_trial: {
+    type: 'time_trial',
+    description: 'Individual time trial on flat roads',
+    weather: 'Strong crosswinds expected',
+    terrain: 'Flat with technical corners'
+  }
+};
+
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   // Optionally: startRaceSimulator(io);
@@ -136,22 +170,15 @@ app.get('/api/predict-winner/:riderName', async (req, res) => {
   }
 });
 
-// --- Existing API Endpoints ---
+// --- Existing API Endpoints (in-memory, no sqlite3) ---
 app.get('/api/race-updates', (req, res) => {
   const { race_id } = req.query;
-  let sql = `SELECT * FROM race_updates WHERE is_published = 1`;
-  const params = [];
+  let updates = raceUpdatesStore.filter(u => u.is_published === 1);
   if (race_id) {
-    sql += ` AND race_id = ?`;
-    params.push(race_id);
+    updates = updates.filter(u => u.race_id === race_id);
   }
-  sql += ` ORDER BY datetime(timestamp) DESC, created_at DESC`;
-  db.all(sql, params, (err, rows) => {
-    if (err) {
-      return res.status(500).json({ success: false, error: 'Failed to fetch race updates' });
-    }
-    res.json({ success: true, updates: rows });
-  });
+  updates.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  res.json({ success: true, updates });
 });
 
 app.post('/api/race-updates', (req, res) => {
@@ -161,23 +188,16 @@ app.post('/api/race-updates', (req, res) => {
         rider_name: rider_name || '', team: team || '', km_to_go: km_to_go ?? null,
         timestamp: timestamp || new Date().toISOString(), is_published: is_published !== false ? 1 : 0
     };
-    db.run(`INSERT INTO race_updates VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [update.id, update.race_id, update.type, update.title, update.message, update.rider_name, update.team, update.km_to_go, update.timestamp, update.is_published],
-        function(err) {
-            if (err) return res.status(500).json({ success: false, error: 'Failed to create race update' });
-            io.emit('liverace:update', update);
-            res.json({ success: true, update });
-        }
-    );
+    raceUpdatesStore.push(update);
+    io.emit('liverace:update', update);
+    res.json({ success: true, update });
 });
 
 app.get('/api/fan-zone', (req, res) => {
-  db.all(`SELECT * FROM fan_zone_posts WHERE is_published = 1 ORDER BY is_featured DESC, datetime(created_at) DESC`,
-    [], (err, rows) => {
-      if (err) return res.status(500).json({ success: false, error: 'Failed to fetch fan zone posts' });
-      res.json({ success: true, posts: rows });
-    }
-  );
+  const posts = fanZonePostsStore
+    .filter(p => p.is_published === 1)
+    .sort((a, b) => b.is_featured - a.is_featured || new Date(b.created_at) - new Date(a.created_at));
+  res.json({ success: true, posts });
 });
 
 app.post('/api/fan-zone', (req, res) => {
@@ -188,14 +208,9 @@ app.post('/api/fan-zone', (req, res) => {
         author_name: author_name || '', race_id: race_id || '', is_featured: is_featured ? 1 : 0,
         is_published: is_published !== false ? 1 : 0, created_at: now, updated_at: now
     };
-    db.run(`INSERT INTO fan_zone_posts VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [post.id, post.title, post.body, post.category, post.media_url, post.author_name, post.race_id, post.is_featured, post.is_published, post.created_at, post.updated_at],
-        function(err) {
-            if (err) return res.status(500).json({ success: false, error: 'Failed to create fan zone post' });
-            io.emit('fanzone:update', post);
-            res.json({ success: true, post });
-        }
-    );
+    fanZonePostsStore.push(post);
+    io.emit('fanzone:update', post);
+    res.json({ success: true, post });
 });
 
 // --- 🧠 RIDER SCORING LOGIC (The Secret Sauce) ---
